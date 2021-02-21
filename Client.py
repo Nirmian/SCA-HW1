@@ -36,11 +36,7 @@ if __name__ == "__main__":
     session_signature = aes_decrypt_msg(decrypted_aes_key, info['sid_signature'])
 
     if verify_signature(session_id, pubk_m, session_signature):
-        print(f"Sid: {session_id}")
-        print(f"SigM: {session_signature}")
+        print("valid signature")
     else:
+        print("non-valid signature")
         m_conn.close()
-
-    
-
-    

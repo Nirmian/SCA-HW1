@@ -23,8 +23,6 @@ def padding(text, bl_size):
 def string_xor(s1, s2):
     return bytes([_a ^ _b for _a, _b in zip(s1, s2)])
 
-
-
 def hybrid_encrypt_msg(text, key):
     session_key = get_random_bytes(16)
     cipher_rsa = PKCS1_OAEP.new(key)
@@ -67,7 +65,6 @@ def aes_encrypt_msg(key, msg):
     encrypted_text_k = cipher_aes.encrypt(pad(msg, BLOCK_SIZE))
     return encrypted_text_k
 
-
 def aes_decrypt_msg(key, msg):
     cipher_aes = AES.new(key, AES.MODE_ECB)
     decrypted_text_k = unpad(cipher_aes.decrypt(msg), BLOCK_SIZE)
@@ -81,9 +78,9 @@ def verify_signature(data, public_key, signature):
     h = SHA256.new(data)
     try:
         pkcs1_15.new(public_key).verify(h, signature)
-        print("valid signature")
+        return True
     except (ValueError, TypeError):
-        print("non-valid signature")
+        return False
 
 def generate_to_file(private_key, path):
     pubkm = private_key.publickey()
