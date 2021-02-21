@@ -1,17 +1,17 @@
 import socket
 import json
+import bson
 from AESFunctions import *
 from Crypto.PublicKey import RSA
-from Shared import *
+from shared import *
 
-M_PORT = 65432
+# Generate public key of client
+private_key = RSA.generate(2048)
+public_key = private_key.publickey().exportKey()
 
 if __name__ == "__main__":
     print("Starting Client.")
-    # Generate public key of client
-    private_key = RSA.generate(2048)
-    public_key = private_key.publickey().exportKey()
-
+    
     pubk_m = get_pubkey_m()
     pubk_pg = get_pubkey_pg()
 
@@ -22,12 +22,12 @@ if __name__ == "__main__":
     # Send client public key to merchant
     m_conn = socket.socket()
     m_conn.connect(('127.0.0.1', M_PORT))
-    m_conn.send(bytes(json.dumps(msg)))
+    m_conn.send(bson.BSON.encode(msg))
     print('Succesfully sent pubk_c to m.')
 
     # Received response from merchant (Sid, SigM(Sid))
     response = m_conn.recv(2048)
-    info = json.loads(response)
+    info = bson.BSON.decode(response)
 
     encrypted_aes_key = info['enc_key']
     decrypted_aes_key = rsa_decrypt_msg(encrypted_aes_key, private_key)
@@ -39,6 +39,8 @@ if __name__ == "__main__":
         print(f"Sid: {session_id}")
         print(f"SigM: {session_signature}")
     else:
-        exit(0)
+        m_conn.close()
 
-    m_conn.close()
+    
+
+    

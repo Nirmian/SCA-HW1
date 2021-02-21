@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "client",
+            "type": "python",
+            "request": "launch",
+            "program": "client.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "merchant",
+            "type": "python",
+            "request": "launch",
+            "program": "merchant.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "paymentgateway",
+            "type": "python",
+            "request": "launch",
+            "program": "pg.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

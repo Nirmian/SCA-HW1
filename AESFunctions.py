@@ -3,7 +3,7 @@
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
-from Crypto.Util.Padding import unpad
+from Crypto.Util.Padding import unpad, pad
 from Crypto.Hash import SHA256
 from Crypto.Signature import pkcs1_15
 
@@ -11,7 +11,7 @@ BLOCK_SIZE = 16
 
 def padding(text, bl_size):
     if(len(text) % bl_size != 0):
-        if isinstance(text, (bytes, bytearray)):
+        if isinstance(text, (bytes  , bytearray)):
             text = text.decode("utf-8")
         padding_length =  bl_size - len(text) % bl_size
         text = text + padding_length * chr(0)
@@ -20,13 +20,18 @@ def padding(text, bl_size):
     else:
         return text.encode("utf-8")
 
+def string_xor(s1, s2):
+    return bytes([_a ^ _b for _a, _b in zip(s1, s2)])
+
+
+
 def hybrid_encrypt_msg(text, key):
     session_key = get_random_bytes(16)
     cipher_rsa = PKCS1_OAEP.new(key)
     encrypted_text_rsa = cipher_rsa.encrypt(session_key)
 
-    cipher_aes = AES.new(padding(session_key, BLOCK_SIZE), AES.MODE_ECB)
-    encrypted_text_k = cipher_aes.encrypt(padding(text, BLOCK_SIZE))
+    cipher_aes = AES.new(session_key, AES.MODE_ECB)
+    encrypted_text_k = cipher_aes.encrypt(pad(text, BLOCK_SIZE))
 
     info = {
         "enc_key" : encrypted_text_rsa,
@@ -34,9 +39,9 @@ def hybrid_encrypt_msg(text, key):
     }
     return info
 
-def hybrid_decrypt_msg(info, key):
+def hybrid_decrypt_msg(info, key):  
     cipher_rsa = PKCS1_OAEP.new(key)
-    decrypted_text_rsa = cipher_rsa.decrypt(info["enc_key"])
+    decrypted_text_rsa = cipher_rsa.decrypt(info['enc_key'])
 
     cipher_rsa = AES.new(decrypted_text_rsa, AES.MODE_ECB)
     decrypted_text_k = unpad(cipher_rsa.decrypt(info["enc_text"]), BLOCK_SIZE)
@@ -59,7 +64,7 @@ def rsa_decrypt_msg(key, rsa_key):
 
 def aes_encrypt_msg(key, msg):
     cipher_aes = AES.new(key, AES.MODE_ECB)
-    encrypted_text_k = cipher_aes.encrypt(padding(msg, BLOCK_SIZE))
+    encrypted_text_k = cipher_aes.encrypt(pad(msg, BLOCK_SIZE))
     return encrypted_text_k
 
 
@@ -80,5 +85,9 @@ def verify_signature(data, public_key, signature):
     except (ValueError, TypeError):
         print("non-valid signature")
 
-def string_xor(s1, s2):
-    return bytes([_a ^ _b for _a, _b in zip(s1, s2)])
+def generate_to_file(private_key, path):
+    pubkm = private_key.publickey()
+    with open(path, "wb") as f:
+        f.write(pubkm.exportKey('PEM'))
+    print("Generated public key")
+    return pubkm
