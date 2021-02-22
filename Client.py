@@ -26,7 +26,7 @@ if __name__ == "__main__":
     print('Succesfully sent pubk_c to m.')
 
     # Received response from merchant (Sid, SigM(Sid))
-    response = m_conn.recv(2048)
+    response = m_conn.recv(4096)
     info = bson.BSON.decode(response)
 
     encrypted_aes_key = info['enc_key']
@@ -44,36 +44,50 @@ if __name__ == "__main__":
     #Exchange subprotocol
 
     paymentorder = PaymentOrder()
-    paymentorder.nonce = get_random_bytes(16)
-    paymentorder.sid = session_id
-    paymentorder.order_description = "Some test order"
-    paymentorder.amount = 5
+    paymentorder.body["nonce"] = get_random_bytes(16)
+    paymentorder.body["sid"] = session_id
+    paymentorder.body["order_description"] = "Some test order"
+    paymentorder.body["amount"] = 5
     #sign PO with private key
-    po_sig = rsa_sign(
-        bson.encode(
-            [paymentorder.order_description, 
-            paymentorder.sid, 
-            paymentorder.amount, 
-            paymentorder.nonce]
-        ),private_key)
+    order_info = {k:paymentorder.body[k] for k in paymentorder.body if k!='sigc'}
+    po_sig = rsa_sign(bson.encode(order_info), private_key)
 
-    paymentorder.sigc = po_sig
+    paymentorder.body["sigc"] = po_sig
 
     #create PI
     paymentinformation = PaymentInformation()
-    paymentinformation.cardn = testcard.cardn
-    paymentinformation.cardexp = testcard.cardexp
-    paymentinformation.ccode = testcard.ccode
-    paymentinformation.sid = session_id
-    paymentinformation.amount = paymentorder.amount
-    paymentinformation.pubkc = public_key
-    paymentinformation.nc = paymentorder.nc
-    paymentinformation.merchant = "some merchant"
+    paymentinformation.body["cardn"] = testcard.body["cardn"]
+    paymentinformation.body["cardexp"] = testcard.body["cardexp"]
+    paymentinformation.body["ccode"] = testcard.body["ccode"]
+    paymentinformation.body["sid"] = session_id
+    paymentinformation.body["amount"] = paymentorder.body["amount"]
+    paymentinformation.body["pubkc"] = public_key
+    paymentinformation.body["nc"] = paymentorder.body["nc"]
+    paymentinformation.body["merchant"] = "some merchant"
 
     #sign PI
-    pi_sig = rsa_sign(bson.encode(paymentinformation), private_key)
+    pi_sig = rsa_sign(bson.encode(paymentinformation.body), private_key)
 
     #create PM
     k = get_random_bytes(16)
-    encrypted_pi = aes_encrypt_msg(k, bson.encode([paymentinformation, pi_sig]))
+    encrypted_pi = aes_encrypt_msg(k, bson.encode({"pi": paymentinformation.body, "pi_sig": pi_sig}))
     encrypted_key = rsa_encrypt_msg(k, get_pubkey_pg())
+
+    pm = {
+        "enc_pi": encrypted_pi, 
+        "enc_key": encrypted_key
+    }
+
+    #encrypt PM then send
+    k = get_random_bytes(16)
+    encrypted_pm_po = aes_encrypt_msg(k, bson.encode({"pm": pm, "po": paymentorder.body}))
+    encrypted_pm_po_key = rsa_encrypt_msg(k, get_pubkey_m())
+
+    m_conn.send(bson.encode({
+        "pm_po": encrypted_pm_po,
+        "pm_po_key": encrypted_pm_po_key
+    })
+    )
+
+    #6
+    response = m_conn.recv(4096)

@@ -14,7 +14,7 @@ if __name__ == "__main__":
             client, address = server.accept()
             print('Server listening on', ('127.0.0.1', PG_PORT))
             # receive PKC 
-            data = client.recv(1024).decode()
+            data = client.recv(4096).decode()
             encrypted_key = b''
 
             # create & send signature to Client

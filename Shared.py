@@ -18,30 +18,35 @@ def get_pubkey_pg():
 
 class PaymentOrder:
     def __init__(self):
-        self.orderdesc = ""
-        self.sid = 0
-        self.amount = 0
-        self.nc = 0
-        self.sigc = None
+        self.body = {
+            "orderdesc" : "",
+            "sid" : 0,
+            "amount" : 0,
+            "nc" : 0,
+            "sigc" : None
+        }
 
 class PaymentInformation:
     def __init__(self):
-        self.cardn = 0
-        self.cardexp = 0 
-        self.ccode = 0
-        self.sid = 0
-        self.amount = 0
-        self.pubkc = 0
-        self.nc = 0
-        self.merchant = 0
+        self.body = {
+           "cardn" : 0,
+           "cardexp" : 0, 
+           "ccode" : 0,
+           "sid" : 0,
+           "amount" : 0,
+           "pubkc" : 0,
+           "nc" : 0,
+           "merchant" : 0
+        }
 
 class Card:
     def __init__(self):
-        self.cardn = 0
-        self.cardexp = 0
-        self.ccode = 0
-
+        self.body = {
+            "cardn" : 0,
+            "cardexp" : 0,
+            "ccode" : 0
+        }
 testcard = Card()
-testcard.cardn = "1234567890123"
-testcard.cardexp = "11/21"
-testcard.cardcode = "321"
+testcard.body["cardn"] = "1234567890123"
+testcard.body["cardexp"] = "11/21"
+testcard.body["cardcode"] = "321"
