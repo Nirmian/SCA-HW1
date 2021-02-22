@@ -40,3 +40,40 @@ if __name__ == "__main__":
     else:
         print("non-valid signature")
         m_conn.close()
+    
+    #Exchange subprotocol
+
+    paymentorder = PaymentOrder()
+    paymentorder.nonce = get_random_bytes(16)
+    paymentorder.sid = session_id
+    paymentorder.order_description = "Some test order"
+    paymentorder.amount = 5
+    #sign PO with private key
+    po_sig = rsa_sign(
+        bson.encode(
+            [paymentorder.order_description, 
+            paymentorder.sid, 
+            paymentorder.amount, 
+            paymentorder.nonce]
+        ),private_key)
+
+    paymentorder.sigc = po_sig
+
+    #create PI
+    paymentinformation = PaymentInformation()
+    paymentinformation.cardn = testcard.cardn
+    paymentinformation.cardexp = testcard.cardexp
+    paymentinformation.ccode = testcard.ccode
+    paymentinformation.sid = session_id
+    paymentinformation.amount = paymentorder.amount
+    paymentinformation.pubkc = public_key
+    paymentinformation.nc = paymentorder.nc
+    paymentinformation.merchant = "some merchant"
+
+    #sign PI
+    pi_sig = rsa_sign(bson.encode(paymentinformation), private_key)
+
+    #create PM
+    k = get_random_bytes(16)
+    encrypted_pi = aes_encrypt_msg(k, bson.encode([paymentinformation, pi_sig]))
+    encrypted_key = rsa_encrypt_msg(k, get_pubkey_pg())

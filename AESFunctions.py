@@ -88,3 +88,8 @@ def generate_to_file(private_key, path):
         f.write(pubkm.exportKey('PEM'))
     print("Generated public key")
     return pubkm
+
+def rsa_sign(data, private_key):
+    digest = SHA256.new() 
+    digest.update(data) #h(data)
+    return pkcs1_15.new(private_key).sign(digest) #SigPvK(data)

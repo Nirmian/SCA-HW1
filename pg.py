@@ -2,6 +2,9 @@ import socket
 from AESFunctions import *
 from shared import *
 
+private_key = RSA.generate(2048)
+public_key = generate_to_file(private_key, 'keys/pubk_pg')
+
 if __name__ == "__main__":
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
         print("Starting Merchant")
