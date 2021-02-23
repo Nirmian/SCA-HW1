@@ -2,7 +2,7 @@ import socket
 import json
 import bson
 from AESFunctions import *
-from shared import *
+from Shared import *
 
 private_key = RSA.generate(2048)
 public_key = generate_to_file(private_key, 'keys/pubk_m')
@@ -31,7 +31,7 @@ if __name__ == "__main__":
             k = get_random_bytes(16)
             encrypted_session_id = aes_encrypt_msg(k, session_id)
             encrypted_client_conn_signature = aes_encrypt_msg(k, client_conn_signature)
-            encrypted_k = rsa_encrypt_msg(k, RSA.importKey(client_pubk))
+            encrypted_k = rsa_encrypt_msg(k, RSA.importKey(client_pubk)) # Rename this to rsa_client_key
 
             client_conn.send(bson.BSON.encode(
                 {
@@ -60,3 +60,32 @@ if __name__ == "__main__":
             
             if verify_signature(bson.encode(order_info), RSA.import_key(client_pubk), po.body["sigc"]):
                 print("Order signature OK!")
+
+            #4 send PM, SigM(Sid, PubKC, Amount)
+            pg_conn = socket.socket()
+            pg_conn.connect(('127.0.0.1', PG_PORT))
+            sig_m = bson.BSON.encode(
+                {
+                    "session_id": encrypted_session_id,
+                    "client_pubk": encrypted_k,
+                    "amount":  po.body["amount"]
+                }
+            )
+            pg_conn_signature = compute_signature(sig_m, private_key)
+            encrypted_pg_conn_signature = aes_encrypt_msg(k, pg_conn_signature)
+
+            pubk_pg = get_pubkey_pg()
+            pubk_pg = rsa_encrypt_msg(k, pubk_pg)
+
+            info = bson.BSON.encode(
+                {
+                    "payment_message": pm,
+                    "sigm": sig_m,
+                    "enc_k": pubk_pg
+                }
+            )
+
+            encrypted_info = hybrid_encrypt_msg(info, pubk_pg)
+
+            pg_conn.send(encrypted_info)
+            print('Succesfully sent payment message to PG')
