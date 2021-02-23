@@ -1,4 +1,5 @@
 from Crypto.PublicKey import RSA
+import bson
 
 C_PORT = 65430
 M_PORT = 65431
@@ -26,6 +27,18 @@ class PaymentOrder:
             "sigc" : None
         }
 
+    #used so we don't include the signature property when signing PO
+    def get_info_only(self):
+        return {k:self.body[k] for k in self.body if k!='sigc'}
+
+    def get_encoded_info(self):
+        return bson.encode(self.get_info_only())
+
+    def get_sigc(self):
+        return self.body["sigc"]
+
+
+
 class PaymentInformation:
     def __init__(self):
         self.body = {
@@ -46,6 +59,7 @@ class Card:
             "cardexp" : 0,
             "ccode" : 0
         }
+
 testcard = Card()
 testcard.body["cardn"] = "1234567890123"
 testcard.body["cardexp"] = "11/21"
