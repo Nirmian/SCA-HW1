@@ -3,7 +3,7 @@ import json
 import bson
 from AESFunctions import *
 from Crypto.PublicKey import RSA
-from Shared import *
+from shared import *
 
 # Generate public key of client
 private_key = RSA.generate(2048)

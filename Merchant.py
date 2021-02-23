@@ -2,7 +2,7 @@ import socket
 import json
 import bson
 from AESFunctions import *
-from Shared import *
+from shared import *
 
 private_key = RSA.generate(2048)
 public_key = generate_to_file(private_key, 'keys/pubk_m')
@@ -75,17 +75,17 @@ if __name__ == "__main__":
             encrypted_pg_conn_signature = aes_encrypt_msg(k, pg_conn_signature)
 
             pubk_pg = get_pubkey_pg()
-            pubk_pg = rsa_encrypt_msg(k, pubk_pg)
+            enc_pubk_pg = rsa_encrypt_msg(k, pubk_pg)
 
             info = bson.BSON.encode(
                 {
                     "payment_message": pm,
                     "sigm": sig_m,
-                    "enc_k": pubk_pg
+                    "enc_k": enc_pubk_pg
                 }
             )
 
             encrypted_info = hybrid_encrypt_msg(info, pubk_pg)
 
-            pg_conn.send(encrypted_info)
+            pg_conn.send(bson.encode(encrypted_info))
             print('Succesfully sent payment message to PG')
