@@ -25,5 +25,11 @@
             "program": "pg.py",
             "console": "integratedTerminal"
         }
+    ],
+    "compounds": [
+        {
+          "name": "All",
+          "configurations": ["paymentgateway", "merchant", "client"]
+        }
     ]
 }

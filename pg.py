@@ -12,16 +12,24 @@ if __name__ == "__main__":
         server.bind(('127.0.0.1', PG_PORT))
         server.listen()
         while True:
-            merchant, address = server.accept()
+            m_conn, address = server.accept()
             print('Server listening on', ('127.0.0.1', PG_PORT))
-            # receive PKC 
-            data = merchant.recv(4096)
-            data = bson.BSON.decode(data)
+            # Exchange step 4
 
-            # pm = data['payment_message']
-            # sig_m = data['sigm']
-            # encrypted_aes_key = data['enc_k']
-            # decrypted_aes_key = rsa_decrypt_msg(encrypted_aes_key, private_key)
+            #receive PM, SigM(Sid, pubkc, amount)
+            data = m_conn.recv(4096)
+            data = bson.decode(data)
 
-            # create & send signature to merchant
-            # merchant.send(encrypted_key)
+            #decrypted_pm_msig_key = rsa_decrypt_msg(data["enc_pm_k"], private_key)
+            #decrypted_pm_msig = aes_decrypt_msg(decrypted_pm_msig_key, data["enc_pm"])
+
+            decrypted_pm_msig = hybrid_decrypt_msg(data, private_key, "enc_pm_k", "enc_pm")
+
+
+
+            pm_msig = bson.decode(decrypted_pm_msig["dec_text"])
+            #decrypted_pi_key = rsa_decrypt_msg(pm_msig["pm"]["enc_key"], private_key)
+            #decrypted_pi = aes_decrypt_msg(decrypted_pi_key, pm_msig["pm"]["enc_pi"])
+            decrypted_pi = hybrid_decrypt_msg(pm_msig["pm"], private_key, "enc_key", "enc_pi")
+
+            print(decrypted_pi)

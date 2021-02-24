@@ -37,12 +37,12 @@ def hybrid_encrypt_msg(text, key):
     }
     return info
 
-def hybrid_decrypt_msg(info, key):  
-    cipher_rsa = PKCS1_OAEP.new(key)
-    decrypted_text_rsa = cipher_rsa.decrypt(info['enc_key'])
+def hybrid_decrypt_msg(info, decrypt_key, dict_keyname, dict_textname):  
+    cipher_rsa = PKCS1_OAEP.new(decrypt_key)
+    decrypted_text_rsa = cipher_rsa.decrypt(info[dict_keyname])
 
     cipher_rsa = AES.new(decrypted_text_rsa, AES.MODE_ECB)
-    decrypted_text_k = unpad(cipher_rsa.decrypt(info["enc_text"]), BLOCK_SIZE)
+    decrypted_text_k = unpad(cipher_rsa.decrypt(info[dict_textname]), BLOCK_SIZE)
 
     info = {
         "dec_key" : decrypted_text_rsa,

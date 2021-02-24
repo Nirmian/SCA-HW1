@@ -8,6 +8,9 @@ private_key = RSA.generate(2048)
 public_key = generate_to_file(private_key, 'keys/pubk_m')
 
 if __name__ == "__main__":
+    import time
+    time.sleep(1)
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
         print("Starting Merchant")
         server.bind(('127.0.0.1', M_PORT))
@@ -22,7 +25,7 @@ if __name__ == "__main__":
 
             
             # create & send signature to client_conn
-            data = hybrid_decrypt_msg(data, private_key)
+            data = hybrid_decrypt_msg(data, private_key, "enc_key", "enc_text")
             client_pubk = data["dec_text"]
 
             session_id = get_random_bytes(16)
@@ -56,36 +59,38 @@ if __name__ == "__main__":
             po = PaymentOrder()
             po.body = loaded_pm_po["po"]
 
-            order_info = {k:po.body[k] for k in po.body if k!='sigc'}
             
-            if verify_signature(bson.encode(order_info), RSA.import_key(client_pubk), po.body["sigc"]):
+            if verify_signature(po.get_encoded_info(), RSA.import_key(client_pubk), po.body["sigc"]):
                 print("Order signature OK!")
 
             #4 send PM, SigM(Sid, PubKC, Amount)
             pg_conn = socket.socket()
             pg_conn.connect(('127.0.0.1', PG_PORT))
-            sig_m = bson.BSON.encode(
-                {
-                    "session_id": encrypted_session_id,
-                    "client_pubk": encrypted_k,
-                    "amount":  po.body["amount"]
-                }
-            )
-            pg_conn_signature = compute_signature(sig_m, private_key)
-            encrypted_pg_conn_signature = aes_encrypt_msg(k, pg_conn_signature)
-
-            pubk_pg = get_pubkey_pg()
-            enc_pubk_pg = rsa_encrypt_msg(k, pubk_pg)
-
-            info = bson.BSON.encode(
-                {
-                    "payment_message": pm,
-                    "sigm": sig_m,
-                    "enc_k": enc_pubk_pg
-                }
+            
+            m_sig = rsa_sign(
+                bson.encode({
+                    "sid": po.body["sid"],
+                    "amount": po.body["amount"],
+                    "pubk_c": client_pubk
+                    }),
+                private_key
             )
 
-            encrypted_info = hybrid_encrypt_msg(info, pubk_pg)
 
-            pg_conn.send(bson.encode(encrypted_info))
+            k = get_random_bytes(16)
+            encrypted_pm = aes_encrypt_msg(k, bson.encode(
+                {
+                    "pm": pm,
+                    "m_sig": m_sig
+                }
+            ))
+            encrypted_pm_k = rsa_encrypt_msg(k, get_pubkey_pg())
+
+            pg_conn.send(bson.encode(
+                {
+                    "enc_pm": encrypted_pm,
+                    "enc_pm_k": encrypted_pm_k
+                }
+            ))
+
             print('Succesfully sent payment message to PG')

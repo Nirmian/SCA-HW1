@@ -10,6 +10,9 @@ private_key = RSA.generate(2048)
 public_key = private_key.publickey().exportKey()
 
 if __name__ == "__main__":
+    import time
+    time.sleep(3)
+
     print("Starting Client.")
     
     pubk_m = get_pubkey_m()
@@ -49,8 +52,8 @@ if __name__ == "__main__":
     paymentorder.body["order_description"] = "Some test order"
     paymentorder.body["amount"] = 5
     #sign PO with private key
-    order_info = {k:paymentorder.body[k] for k in paymentorder.body if k!='sigc'}
-    po_sig = rsa_sign(bson.encode(order_info), private_key)
+
+    po_sig = rsa_sign(paymentorder.get_encoded_info(), private_key)
 
     paymentorder.body["sigc"] = po_sig
 
