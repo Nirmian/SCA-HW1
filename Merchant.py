@@ -89,7 +89,7 @@ if __name__ == "__main__":
             # Setup subprotocol
             # setup 1 receive encrypted PKC
             data = client_conn.recv(4096)
-            data = bson.BSON.decode(data)
+            data = bson.decode(data)
 
             client_pubk = setup_2(data)
             

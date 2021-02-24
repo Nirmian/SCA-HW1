@@ -17,6 +17,14 @@ def get_pubkey_pg():
     f.close()
     return pubkey_pg
 
+def get_msig_info(paymentinformation):
+    return {
+        "sid": paymentinformation["sid"],
+        "amount": paymentinformation["amount"],
+        "pubk_c": paymentinformation["pubkc"]
+    }
+
+
 class PaymentOrder:
     def __init__(self):
         self.body = {
@@ -51,6 +59,7 @@ class PaymentInformation:
            "nc" : 0,
            "merchant" : 0
         }
+    
 
 class Card:
     def __init__(self):
