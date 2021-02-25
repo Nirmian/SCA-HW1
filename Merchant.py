@@ -30,7 +30,7 @@ def setup_2(data):
         }
     ))
 
-    return client_pubk
+    return (client_pubk, session_id)
 
 #Receive PM, PO, verify signature
 def exchange_3(data):
@@ -74,6 +74,26 @@ def exchange_4(pm, po):
     ))
     print('Succesfully sent payment message to PG')
 
+def exchange_5(resp):
+    decrypted_resp = hybrid_decrypt_msg(resp, private_key, "enc_key", "enc_text")
+    decrypted_resp = bson.decode(decrypted_resp['dec_text'])
+
+    print('Received response from PG')
+    return decrypted_resp
+
+def exchange_6(decrypted_resp, sid, po, client_pubk):
+    sig_pg = bson.encode(
+        {
+            "resp": decrypted_resp['resp'],
+            "sid": decrypted_resp['sid'],
+            "amount": po.body['amount'],
+            "nonce": po.body['nonce']
+        }
+    )
+    if sid == decrypted_resp['sid']:
+        if verify_signature(sig_pg, get_pubkey_pg(), decrypted_resp['pg_sig']):
+            data = hybrid_encrypt_msg(bson.encode(decrypted_resp), RSA.importKey(client_pubk))
+            client_conn.send(bson.encode(data))
 if __name__ == "__main__":
     import time
     time.sleep(1)
@@ -91,7 +111,7 @@ if __name__ == "__main__":
             data = client_conn.recv(4096)
             data = bson.decode(data)
 
-            client_pubk = setup_2(data)
+            client_pubk, session_id = setup_2(data)
             
             #Exchange subprotocol
             data = client_conn.recv(4096)
@@ -105,4 +125,10 @@ if __name__ == "__main__":
             
             exchange_4(pm, po)
 
+            #5 Receive response from PG
             data = pg_conn.recv(4096)
+            data = bson.decode(data)
+            decrypted_resp = exchange_5(data)
+
+            #6 Verify pg_sig and session id
+            exchange_6(decrypted_resp, session_id, po, client_pubk)

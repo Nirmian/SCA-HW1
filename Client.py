@@ -50,7 +50,7 @@ def create_pi(paymentorder):
     paymentinformation.body["sid"] = session_id
     paymentinformation.body["amount"] = paymentorder.body["amount"]
     paymentinformation.body["pubkc"] = public_key
-    paymentinformation.body["nc"] = paymentorder.body["nc"]
+    paymentinformation.body["nonce"] = paymentorder.body["nonce"]
     paymentinformation.body["merchant"] = "some merchant"
     return paymentinformation
 
@@ -113,3 +113,4 @@ if __name__ == "__main__":
     
     #6
     response = m_conn.recv(4096)
+    print("Received response from M.")

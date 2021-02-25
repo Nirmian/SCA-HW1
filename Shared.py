@@ -31,7 +31,7 @@ class PaymentOrder:
             "orderdesc" : "",
             "sid" : 0,
             "amount" : 0,
-            "nc" : 0,
+            "nonce" : 0,
             "sigc" : None
         }
 
@@ -56,7 +56,7 @@ class PaymentInformation:
            "sid" : 0,
            "amount" : 0,
            "pubkc" : 0,
-           "nc" : 0,
+           "nonce" : 0,
            "merchant" : 0
         }
     
@@ -68,6 +68,10 @@ class Card:
             "cardexp" : 0,
             "ccode" : 0
         }
+
+class Response:
+    OK = 100
+    NOT_OK = 101
 
 testcard = Card()
 testcard.body["cardn"] = "1234567890123"
