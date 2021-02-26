@@ -71,8 +71,8 @@ def aes_decrypt_msg(key, msg):
     return decrypted_text_k
 
 def compute_signature(msg, private_key):
-    h = SHA256.new(msg)
-    return pkcs1_15.new(private_key).sign(h)
+    h = SHA256.new(msg) #h(data)
+    return pkcs1_15.new(private_key).sign(h) #SigPvK(data)
 
 def verify_signature(data, public_key, signature):
     h = SHA256.new(data)
@@ -88,8 +88,3 @@ def generate_to_file(private_key, path):
         f.write(pubkm.exportKey('PEM'))
     print("Generated public key")
     return pubkm
-
-def rsa_sign(data, private_key):
-    digest = SHA256.new() 
-    digest.update(data) #h(data)
-    return pkcs1_15.new(private_key).sign(digest) #SigPvK(data)

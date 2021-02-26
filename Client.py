@@ -15,21 +15,21 @@ m_conn = None
 # Send client public key to merchant
 def setup_1():
     msg = hybrid_encrypt_msg(public_key, pubk_m)
-    m_conn.send(bson.BSON.encode(msg))
-    print('Succesfully sent pubk_c to m.')
+    m_conn.send(bson.encode(msg))
+    print('Sent client key to Merchant.')
 
 # Receive response from merchant (Sid, SigM(Sid)) then return session id
 def setup_2(info):
-    encrypted_aes_key = info['enc_key']
-    decrypted_aes_key = rsa_decrypt_msg(encrypted_aes_key, private_key)
-
-    session_id = aes_decrypt_msg(decrypted_aes_key, info['session_id'])
-    session_signature = aes_decrypt_msg(decrypted_aes_key, info['sid_signature'])
+    decrypted_info = hybrid_decrypt_msg(info, private_key)
+    decoded_info = bson.decode(decrypted_info["dec_text"])
+    session_id = decoded_info["sid"]
+    session_signature = decoded_info["sid_sig"]
 
     if verify_signature(session_id, pubk_m, session_signature):
-        print("valid signature")
+        print("Session ID signature VALID")
+        print("Starting transaction sid:", session_id)
     else:
-        print("non-valid signature")
+        print("Session ID signature INVALID")
         m_conn.close()
     
     return session_id
@@ -55,34 +55,25 @@ def create_pi(paymentorder):
     return paymentinformation
 
 def create_pm_po(paymentorder, paymentinformation, pi_sig):
-    k = get_random_bytes(16)
-    encrypted_pi = aes_encrypt_msg(k, bson.encode({"pi": paymentinformation.body, "pi_sig": pi_sig}))
-    encrypted_key = rsa_encrypt_msg(k, get_pubkey_pg())
-
-    pm = {
-        "enc_pi": encrypted_pi, 
-        "enc_key": encrypted_key
-    }
+    pi_pisig = bson.encode({"pi": paymentinformation.body, "pi_sig": pi_sig})
+    
+    pm = hybrid_encrypt_msg(pi_pisig, get_pubkey_pg())
 
     #encrypt PM
-    k = get_random_bytes(16)
-    encrypted_pm_po = aes_encrypt_msg(k, bson.encode({"pm": pm, "po": paymentorder.body}))
-    encrypted_pm_po_key = rsa_encrypt_msg(k, get_pubkey_m())
+    pm_po = bson.encode({"pm": pm, "po": paymentorder.body})
+    encrypted_pm_po = hybrid_encrypt_msg(pm_po, get_pubkey_m())
 
-    return {
-        "pm_po": encrypted_pm_po,
-        "pm_po_key": encrypted_pm_po_key
-    }
+    return encrypted_pm_po
 
 def exchange_3(session_id):
     paymentorder = create_po(session_id)
     #sign PO with private key
-    po_sig = rsa_sign(paymentorder.get_encoded_info(), private_key)
+    po_sig = compute_signature(paymentorder.get_encoded_info(), private_key)
     paymentorder.body["sigc"] = po_sig
 
     paymentinformation = create_pi(paymentorder)
     #sign PI
-    pi_sig = rsa_sign(bson.encode(paymentinformation.body), private_key)
+    pi_sig = compute_signature(bson.encode(paymentinformation.body), private_key)
 
     #encrypt pm, po then send
     pm_po = create_pm_po(paymentorder, paymentinformation, pi_sig)
@@ -104,9 +95,9 @@ def exchange_6(response, pi, session_id):
     if decoded_response["sid"] == session_id:
         if verify_signature(bson.encode(data_toverify), get_pubkey_pg(), decoded_response["pg_sig"]):
             if decoded_response["resp"] == Response.OK:
-                print("Transaction", session_id , "ACCEPTED!")
+                print("Transaction sid:", session_id , "ACCEPTED!")
             else:
-                print("Transaction", session_id , "REJECTED!")
+                print("Transaction sid:", session_id , "REJECTED!")
 
 if __name__ == "__main__":
     import time
