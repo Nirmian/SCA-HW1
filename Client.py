@@ -88,6 +88,25 @@ def exchange_3(session_id):
     pm_po = create_pm_po(paymentorder, paymentinformation, pi_sig)
     m_conn.send(bson.encode(pm_po))
 
+    return paymentinformation, paymentorder
+
+def exchange_6(response, pi, session_id):
+    decrypted_response = hybrid_decrypt_msg(bson.decode(response), private_key)
+    decoded_response = bson.decode(decrypted_response["dec_text"])
+    
+    data_toverify = {
+        "resp" : decoded_response["resp"],
+        "sid" : session_id,
+        "amount" : pi.body["amount"],
+        "nonce" : pi.body["nonce"]
+    }
+
+    if decoded_response["sid"] == session_id:
+        if verify_signature(bson.encode(data_toverify), get_pubkey_pg(), decoded_response["pg_sig"]):
+            if decoded_response["resp"] == Response.OK:
+                print("Transaction", session_id , "ACCEPTED!")
+            else:
+                print("Transaction", session_id , "REJECTED!")
 
 if __name__ == "__main__":
     import time
@@ -109,8 +128,10 @@ if __name__ == "__main__":
     session_id = setup_2(info)
 
     #Exchange subprotocol
-    exchange_3(session_id)
+    pi, po = exchange_3(session_id)
     
     #6
     response = m_conn.recv(4096)
     print("Received response from M.")
+
+    exchange_6(response, pi, session_id)

@@ -37,7 +37,7 @@ def hybrid_encrypt_msg(text, key):
     }
     return info
 
-def hybrid_decrypt_msg(info, decrypt_key, dict_keyname, dict_textname):  
+def hybrid_decrypt_msg(info, decrypt_key, dict_keyname="enc_key", dict_textname="enc_text"):  
     cipher_rsa = PKCS1_OAEP.new(decrypt_key)
     decrypted_text_rsa = cipher_rsa.decrypt(info[dict_keyname])
 

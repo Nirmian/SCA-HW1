@@ -94,6 +94,7 @@ def exchange_6(decrypted_resp, sid, po, client_pubk):
         if verify_signature(sig_pg, get_pubkey_pg(), decrypted_resp['pg_sig']):
             data = hybrid_encrypt_msg(bson.encode(decrypted_resp), RSA.importKey(client_pubk))
             client_conn.send(bson.encode(data))
+
 if __name__ == "__main__":
     import time
     time.sleep(1)
