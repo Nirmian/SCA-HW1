@@ -15,6 +15,8 @@ def verify_pm_msig_pi_pisig(data, pubk_m):
 
     pi_pisig = bson.decode(decrypted_pi_pisig["dec_text"])
     pi = pi_pisig["pi"]
+    
+    print("Transaction:", pi['sid'])
 
     if verify_signature(bson.encode(get_msig_info(pi)), pubk_m, msig):
         print("PM, Merchant Sig OK!")
@@ -46,6 +48,7 @@ def exchange_5(resp, pi, pubk_m):
         }
     )
     m_conn.send(bson.encode(hybrid_encrypt_msg(response, pubk_m)))
+    print('Transaction response:', 'ACCEPTED' if resp == Response.OK else 'REJECTED')
     print('Sending transaction response to merchant')
 
 if __name__ == "__main__":

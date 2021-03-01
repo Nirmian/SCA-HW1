@@ -79,6 +79,8 @@ def exchange_3(session_id):
     pm_po = create_pm_po(paymentorder, paymentinformation, pi_sig)
     m_conn.send(bson.encode(pm_po))
 
+    print("Sent PM, PO to merchant")
+
     return paymentinformation, paymentorder
 
 def exchange_6(response, pi, session_id):
@@ -126,3 +128,5 @@ if __name__ == "__main__":
     print("Received response from M.")
 
     exchange_6(response, pi, session_id)
+
+    m_conn.close()

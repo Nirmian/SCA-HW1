@@ -76,4 +76,4 @@ class Response:
 testcard = Card()
 testcard.body["cardn"] = "1234567890123"
 testcard.body["cardexp"] = "11/21"
-testcard.body["cardcode"] = "321"
+testcard.body["ccode"] = "321"

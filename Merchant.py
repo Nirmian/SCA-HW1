@@ -14,6 +14,8 @@ def setup_2(data):
     data = hybrid_decrypt_msg(data, private_key)
     client_pubk = data["dec_text"]
 
+    print("Received client key")
+
     session_id = get_random_bytes(16)
     sid_sig = compute_signature(session_id, private_key)
 
@@ -22,8 +24,12 @@ def setup_2(data):
         "sid_sig" : sid_sig
     }
     
+    print("Starting transaction:", session_id)
+
     encrypted_sidsigm = hybrid_encrypt_msg(bson.encode(sid_sig_msg), RSA.importKey(client_pubk))
     client_conn.send(bson.encode(encrypted_sidsigm))
+
+    print("Sent SID, merchant signature to client")
 
     return (client_pubk, session_id)
 
@@ -32,6 +38,8 @@ def exchange_3(data):
     decrypted_data = hybrid_decrypt_msg(data, private_key) 
     pm_po = bson.decode(decrypted_data["dec_text"])
     
+    print("Received PM, PO from client")
+
     pm = pm_po["pm"]
     po = PaymentOrder()
     po.body = pm_po["po"]
@@ -62,7 +70,7 @@ def exchange_4(pm, po):
     encrypted_pm = hybrid_encrypt_msg(pm, get_pubkey_pg())
     pg_conn.send(bson.encode(encrypted_pm))
 
-    print('Succesfully sent payment message to PG')
+    print('Succesfully sent PM & signature to PG')
 
 def exchange_5(resp):
     decrypted_resp = hybrid_decrypt_msg(resp, private_key)
@@ -84,6 +92,8 @@ def exchange_6(decrypted_resp, sid, po, client_pubk):
         if verify_signature(sig_pg, get_pubkey_pg(), decrypted_resp['pg_sig']):
             data = hybrid_encrypt_msg(bson.encode(decrypted_resp), RSA.importKey(client_pubk))
             client_conn.send(bson.encode(data))
+    
+    print('Transaction response:', 'ACCEPTED' if decrypted_resp['resp'] == Response.OK else 'REJECTED')
 
 if __name__ == "__main__":
     import time

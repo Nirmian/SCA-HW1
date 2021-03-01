@@ -26,27 +26,27 @@ def string_xor(s1, s2):
 def hybrid_encrypt_msg(text, key):
     session_key = get_random_bytes(16)
     cipher_rsa = PKCS1_OAEP.new(key)
-    encrypted_text_rsa = cipher_rsa.encrypt(session_key)
+    encrypted_session_key = cipher_rsa.encrypt(session_key)
 
     cipher_aes = AES.new(session_key, AES.MODE_ECB)
-    encrypted_text_k = cipher_aes.encrypt(pad(text, BLOCK_SIZE))
+    encrypted_text = cipher_aes.encrypt(pad(text, BLOCK_SIZE))
 
     info = {
-        "enc_key" : encrypted_text_rsa,
-        "enc_text" : encrypted_text_k
+        "enc_key" : encrypted_session_key,
+        "enc_text" : encrypted_text
     }
     return info
 
 def hybrid_decrypt_msg(info, decrypt_key):  
     cipher_rsa = PKCS1_OAEP.new(decrypt_key)
-    decrypted_text_rsa = cipher_rsa.decrypt(info["enc_key"])
+    decrypted_session_key = cipher_rsa.decrypt(info["enc_key"])
 
-    cipher_rsa = AES.new(decrypted_text_rsa, AES.MODE_ECB)
-    decrypted_text_k = unpad(cipher_rsa.decrypt(info["enc_text"]), BLOCK_SIZE)
+    cipher_rsa = AES.new(decrypted_session_key, AES.MODE_ECB)
+    decrypted_text = unpad(cipher_rsa.decrypt(info["enc_text"]), BLOCK_SIZE)
 
     info = {
-        "dec_key" : decrypted_text_rsa,
-        "dec_text" : decrypted_text_k
+        "dec_key" : decrypted_session_key,
+        "dec_text" : decrypted_text
     }
     return info
 
