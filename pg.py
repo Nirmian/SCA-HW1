@@ -6,6 +6,9 @@ from shared import *
 private_key = RSA.generate(2048)
 public_key = generate_to_file(private_key, 'keys/pubk_pg')
 m_conn = None
+cards = {
+    '1234567890123' : {'cardexp': '11/21', 'ccode': '0', 'amount' : 5}
+}
 
 def verify_pm_msig_pi_pisig(data, pubk_m):
     decrypted_pm_msig = hybrid_decrypt_msg(data, private_key)
@@ -26,8 +29,14 @@ def verify_pm_msig_pi_pisig(data, pubk_m):
     return pi
 
 def exchange_4(data, pubk_m):
+    response = Response.OK
     pi = verify_pm_msig_pi_pisig(data, pubk_m)
-    return pi
+    if pi['amount'] <= cards[pi['cardn']]['amount']:
+        print('Client has the required amount')
+    else:
+        print('Client does not have the required amount')
+        response = Response.NOT_OK
+    return pi, response
     #needs to check card balance or something
 
 def exchange_5(resp, pi, pubk_m):
@@ -66,10 +75,10 @@ if __name__ == "__main__":
             data = m_conn.recv(4096)
             data = bson.decode(data)
 
-            pi = exchange_4(data, pubk_m)
+            pi, response = exchange_4(data, pubk_m)
 
             #step 5
-            exchange_5(Response.OK, pi, pubk_m)
+            exchange_5(response, pi, pubk_m)
             
 
             

@@ -50,26 +50,6 @@ def hybrid_decrypt_msg(info, decrypt_key):
     }
     return info
 
-def rsa_encrypt_msg(key, rsa_key):
-    cipher_rsa = PKCS1_OAEP.new(rsa_key)
-    encrypted_msg_rsa = cipher_rsa.encrypt(key)
-    return encrypted_msg_rsa
-
-def rsa_decrypt_msg(key, rsa_key):
-    cipher_rsa = PKCS1_OAEP.new(rsa_key)
-    decrypted_msg_rsa = cipher_rsa.decrypt(key)
-    return decrypted_msg_rsa
-
-def aes_encrypt_msg(key, msg):
-    cipher_aes = AES.new(key, AES.MODE_ECB)
-    encrypted_text_k = cipher_aes.encrypt(pad(msg, BLOCK_SIZE))
-    return encrypted_text_k
-
-def aes_decrypt_msg(key, msg):
-    cipher_aes = AES.new(key, AES.MODE_ECB)
-    decrypted_text_k = unpad(cipher_aes.decrypt(msg), BLOCK_SIZE)
-    return decrypted_text_k
-
 def compute_signature(msg, private_key):
     h = SHA256.new(msg) #h(data)
     return pkcs1_15.new(private_key).sign(h) #SigPvK(data)

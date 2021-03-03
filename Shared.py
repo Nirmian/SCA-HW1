@@ -72,8 +72,3 @@ class Card:
 class Response:
     OK = 100
     NOT_OK = 101
-
-testcard = Card()
-testcard.body["cardn"] = "1234567890123"
-testcard.body["cardexp"] = "11/21"
-testcard.body["ccode"] = "321"

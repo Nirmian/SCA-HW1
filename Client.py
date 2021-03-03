@@ -5,6 +5,11 @@ from AESFunctions import *
 from Crypto.PublicKey import RSA
 from shared import *
 
+testcard = Card()
+testcard.body["cardn"] = "1234567890123"
+testcard.body["cardexp"] = "11/21"
+testcard.body["ccode"] = "321"
+
 # Generate public key of client
 private_key = RSA.generate(2048)
 public_key = private_key.publickey().exportKey()
